@@ -1,27 +1,81 @@
-# React + TypeScript + Vite
+# React Dialog
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 소개
 
-Currently, two official plugins are available:
+React로 다이얼로그 요소를 구현하였습니다.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 명령형으로 다이얼로그를 표시하고, 사용자의 선택을 반환받을 수 있습니다.
+- 여러 개의 메시지가 동시에 열릴 경우, 순차적으로 표시합니다.
+- 상황에 따라 선언적으로 사용할 수도 있습니다.
+- 렌더링 시 confirm 버튼에 오토포커스됩니다.
+- Escape 키를 이용해 다이얼로그를 닫을 수 있습니다.
 
-## Expanding the ESLint configuration
+## 예시 코드
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+명령형으로는 다음과 같이 사용할 수 있습니다.
 
-- Configure the top-level `parserOptions` property like this:
+트리 내부에 `GlobalDialog` 컴포넌트가 선언되어 있으면,
+어느 컴포넌트에서든 `useDialogStore` 훅으로 다이얼로그를 열 수 있습니다.
 
-```js
-   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-   },
+```jsx
+// App.tsx
+import GlobalDialog from '@/components/GlobalDialog';
+import Button from '@/components/Button';
+
+const App = () => {
+   return (
+      //...
+      <Button />
+      <GlobalDialog />
+   )
+}
+
+// component/Button.tsx
+import { useDialogStore } from '@/store/dialog';
+
+const Button = () => {
+  const dialog = useDialogStore();
+
+  const handleClick = async () => {
+    const confirmed = await dialog.show({
+      type: 'confirm',
+      content: '진행하시겠습니까?',
+    });
+
+    if (confirmed) {
+      doSomething();
+    }
+  };
+
+  return <button onClick={handleClick}>실행</button>;
+};
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+상황에 따라 다음과 같이 선언적으로 사용할 수도 있습니다.
+
+```jsx
+import Dialog from '@/components/Dialog';
+
+const App = () => {
+  const [open, setOpen] = useState(false);
+  const show = () => setOpen(true);
+  const close = () => setOpen(false);
+
+  return (
+    <main>
+      <button onClick={show}>다이얼로그 열기</button>
+      <Dialog
+        message={{
+          type: 'confirm',
+          content: '진행하시겠습니까?',
+          confirmLabel: '확인',
+          cancelLabel: '취소',
+          onConfirm: handleSomething,
+        }}
+        open={open}
+        close={close}
+      />
+    </main>
+  );
+};
+```
